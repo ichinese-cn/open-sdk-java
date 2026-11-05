@@ -11,7 +11,7 @@ public final class Meta {
   private Meta() {}
 
   /** The SDK's version (it follows the open API's). */
-  public static final String VERSION = "1.0.0-rc.1";
+  public static final String VERSION = "1.0.0-rc.2";
 
   /** The open API's address from the release configuration (sdks/release.json); the client's <code>baseUrl</code> overrides it. */
   public static final String DEFAULT_BASE_URL = "https://open.ichinese.cn";
