@@ -1,0 +1,137 @@
+// The open platform's Java server SDK (Maven cn.ichinese:open-sdk). Version and coordinates come from
+// gradle.properties, which sdks/tools writes from sdks/release.json (pnpm sdk:gen).
+//
+//   ./gradlew build                 compile, unit tests (+ integration tests when ICH_OPEN_IT is set), jars
+//   ./gradlew publishToMavenLocal   into ~/.m2 (no credentials needed)
+//   ./gradlew publish               to MAVEN_REPO_URL (with MAVEN_USERNAME / MAVEN_PASSWORD unless it is a
+//                                   directory), signed with SIGNING_KEY / SIGNING_PASSWORD (ASCII-armored
+//                                   PGP key) when set; a release goes through .github/workflows/release.yml
+plugins {
+  id 'java-library'
+  id 'maven-publish'
+  id 'signing'
+}
+
+java {
+  sourceCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_11
+  withSourcesJar()
+  withJavadocJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+  options.encoding = 'UTF-8'
+  options.release = 11
+  options.compilerArgs += ['-Xlint:all', '-Xlint:-serial']
+}
+
+javadoc {
+  options.encoding = 'UTF-8'
+  options.charSet = 'UTF-8'
+  options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+repositories {
+  mavenCentral()
+}
+
+sourceSets {
+  examples {
+    java { srcDirs = ['examples'] }
+    compileClasspath += sourceSets.main.output
+    runtimeClasspath += sourceSets.main.output
+  }
+}
+
+dependencies {
+  // No runtime dependencies.
+  testImplementation 'junit:junit:4.13.2'
+}
+
+jar {
+  manifest {
+    attributes(
+      'Implementation-Title': 'iChinese open platform SDK',
+      'Implementation-Version': project.version,
+      'Automatic-Module-Name': 'cn.ichinese.open'
+    )
+  }
+}
+
+test {
+  useJUnit()
+  // The integration test reads ICH_OPEN_IT (the fixture JSON or a file holding it); without it, it is skipped.
+  def itFixture = System.getenv('ICH_OPEN_IT')
+  if (itFixture) environment 'ICH_OPEN_IT', itFixture
+  inputs.property('ichOpenIt', itFixture ?: '')
+  testLogging {
+    events('failed', 'skipped')
+    exceptionFormat = 'full'
+  }
+}
+
+// The examples compile with every build: ./gradlew runExample -Pexample=TenantMembers
+check.dependsOn examplesClasses
+tasks.register('runExample', JavaExec) {
+  classpath = sourceSets.examples.runtimeClasspath
+  mainClass = project.findProperty('example') ?: 'TenantMembers'
+}
+
+def githubOrg = project.findProperty('githubOrg') ?: 'ichinese-cn'
+
+publishing {
+  publications {
+    maven(MavenPublication) {
+      groupId = project.group
+      artifactId = project.findProperty('artifactId') ?: 'open-sdk'
+      version = project.version
+      from components.java
+      pom {
+        name = 'iChinese open platform SDK'
+        description = 'Server SDK for the iChinese open platform (open API, tokens, events) for Java 11+.'
+        url = "https://github.com/${githubOrg}/open-sdk-java"
+        licenses {
+          license {
+            name = 'MIT License'
+            url = 'https://opensource.org/licenses/MIT'
+          }
+        }
+        developers {
+          developer {
+            id = 'clec'
+            name = 'Center for Language Education and Cooperation (CLEC)'
+          }
+        }
+        scm {
+          url = "https://github.com/${githubOrg}/open-sdk-java"
+          connection = "scm:git:https://github.com/${githubOrg}/open-sdk-java.git"
+          developerConnection = "scm:git:ssh://git@github.com/${githubOrg}/open-sdk-java.git"
+        }
+      }
+    }
+  }
+  repositories {
+    def repoUrl = System.getenv('MAVEN_REPO_URL')
+    if (repoUrl) {
+      maven {
+        name = 'release'
+        url = repoUrl
+        // Not for a directory (file:…), where the release workflow collects the bundle for Maven Central.
+        if (System.getenv('MAVEN_USERNAME')) {
+          credentials {
+            username = System.getenv('MAVEN_USERNAME')
+            password = System.getenv('MAVEN_PASSWORD')
+          }
+        }
+      }
+    }
+  }
+}
+
+def signingKey = System.getenv('SIGNING_KEY')
+if (signingKey) {
+  signing {
+    useInMemoryPgpKeys(signingKey, System.getenv('SIGNING_PASSWORD') ?: '')
+    sign publishing.publications.maven
+  }
+}

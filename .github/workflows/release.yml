@@ -1,0 +1,57 @@
+# Publishes the tag to Maven Central through the Central Publisher Portal's API: a signed bundle, then its
+# validation. A stable version goes out by itself. A prerelease stops once validated: Maven Central can never take
+# a version back, so publishing one (or dropping it) is a click at central.sonatype.com/publishing/deployments.
+name: release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: maven
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - name: The tag is the package's version
+        run: test "v$(sed -n 's/^version=//p' gradle.properties)" = "$GITHUB_REF_NAME"
+      - name: Test, build and sign into a directory
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: MAVEN_REPO_URL="file://$PWD/build/central" ./gradlew --console=plain build publish
+      - name: Bundle
+        run: |
+          find build/central -name 'maven-metadata*' -delete
+          (cd build/central && zip -qr ../central-bundle.zip .)
+      - name: Upload to the Central Publisher Portal and wait for it
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+        run: |
+          auth=$(printf '%s:%s' "$MAVEN_USERNAME" "$MAVEN_PASSWORD" | base64 -w0)
+          api=https://central.sonatype.com/api/v1/publisher
+          case "$GITHUB_REF_NAME" in
+            *-*) mode=USER_MANAGED done=VALIDATED ;;
+            *) mode=AUTOMATIC done=PUBLISHED ;;
+          esac
+          id=$(curl -fsS -H "Authorization: Bearer $auth" -F bundle=@build/central-bundle.zip \
+            "$api/upload?publishingType=$mode&name=cn.ichinese:open-sdk:$GITHUB_REF_NAME")
+          echo "deployment $id ($mode)"
+          for _ in $(seq 1 90); do
+            status=$(curl -fsS -X POST -H "Authorization: Bearer $auth" "$api/status?id=$id")
+            state=$(printf '%s' "$status" | jq -r .deploymentState)
+            echo "$state"
+            case "$state" in
+              "$done") exit 0 ;;
+              FAILED) printf '%s\n' "$status" | jq .errors; exit 1 ;;
+            esac
+            sleep 20
+          done
+          echo "still $state after 30 minutes: see central.sonatype.com/publishing/deployments"
+          exit 1
