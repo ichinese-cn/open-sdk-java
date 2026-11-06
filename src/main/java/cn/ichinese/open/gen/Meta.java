@@ -11,7 +11,7 @@ public final class Meta {
   private Meta() {}
 
   /** The SDK's version (it follows the open API's). */
-  public static final String VERSION = "1.0.0-rc.2";
+  public static final String VERSION = "1.0.0-rc.3";
 
   /** The open API's address from the release configuration (sdks/release.json); the client's <code>baseUrl</code> overrides it. */
   public static final String DEFAULT_BASE_URL = "https://open.ichinese.cn";
@@ -44,11 +44,21 @@ public final class Meta {
       "job:candidate:readonly",
       "trial",
       "trade:order:readonly",
+      "trade:booking:readonly",
+      "venue:readonly",
+      "venue",
+      "opening:readonly",
       "review",
       "profile:interest:readonly",
       "profile:interest",
       "profile:learning:readonly",
-      "report:create"
+      "report:create",
+      "community:post",
+      "me:schedule:readonly",
+      "me:learning:readonly",
+      "me:words:readonly",
+      "me:words",
+      "insights:readonly"
   );
 
   /** The events an app can subscribe to. */
@@ -64,7 +74,18 @@ public final class Meta {
       "trade.order_paid",
       "review.created",
       "trial.booked",
-      "im.message_received"
+      "im.message_received",
+      "class.member_changed",
+      "course.completed",
+      "exam.results_released",
+      "event.checked_in",
+      "live.recording_ready",
+      "trade.order_refunded",
+      "trial.confirmed",
+      "trial.cancelled",
+      "community.post_reviewed",
+      "community.video_ready",
+      "booking.changed"
   );
 
   /** <code>error.details.reason</code> values. */
@@ -87,7 +108,30 @@ public final class Meta {
       "code_invalid",
       "redirect_uri_mismatch",
       "origin_not_trusted",
-      "ip_not_allowed"
+      "ip_not_allowed",
+      "org_not_installed",
+      "minor_not_allowed",
+      "birth_year_required",
+      "feature_disabled",
+      "app_post_stopped",
+      "consent_required",
+      "video_not_ready",
+      "video_failed",
+      "post_rate_limited",
+      "app_user_daily_limit",
+      "post_in_progress",
+      "no_org_account",
+      "teacher_busy",
+      "online_only",
+      "venue_unavailable",
+      "venue_not_found",
+      "slot_overlap",
+      "slot_taken",
+      "not_draft",
+      "not_editable",
+      "org_not_verified",
+      "opening_ended",
+      "opening_incomplete"
   );
 
   /** Token types (app, tenant, user) each operation accepts; the client picks the token by them. */
@@ -105,6 +149,8 @@ public final class Meta {
     m.put("addClassMember", List.of("tenant", "user"));
     m.put("removeClassMember", List.of("tenant", "user"));
     m.put("listClassSessions", List.of("tenant", "user"));
+    m.put("createClassSessions", List.of("tenant", "user"));
+    m.put("setClassSessionPlace", List.of("tenant", "user"));
     m.put("cancelClassSession", List.of("tenant", "user"));
     m.put("rescheduleClassSession", List.of("tenant", "user"));
     m.put("getSessionAttendance", List.of("tenant", "user"));
@@ -132,9 +178,18 @@ public final class Meta {
     m.put("listTrialSlots", List.of("tenant"));
     m.put("createTrialSlots", List.of("tenant"));
     m.put("cancelTrialSlot", List.of("tenant"));
+    m.put("setTrialTeacher", List.of("tenant"));
     m.put("listTrialBookings", List.of("tenant"));
     m.put("confirmTrialBooking", List.of("tenant"));
+    m.put("listVenues", List.of("tenant"));
+    m.put("createVenue", List.of("tenant"));
+    m.put("getVenue", List.of("tenant"));
+    m.put("listOpenings", List.of("tenant", "user"));
+    m.put("getOpening", List.of("tenant", "user"));
+    m.put("getInsights", List.of("tenant"));
     m.put("listTradeOrders", List.of("tenant"));
+    m.put("listBookings", List.of("tenant"));
+    m.put("getBooking", List.of("tenant"));
     m.put("listTenantReviews", List.of("tenant"));
     m.put("replyReview", List.of("tenant"));
     m.put("listPublicContent", List.of("app", "tenant", "user"));
@@ -142,6 +197,21 @@ public final class Meta {
     m.put("addInterestSignal", List.of("user"));
     m.put("getUserLearningProfile", List.of("user"));
     m.put("reportOnBehalf", List.of("user"));
+    m.put("createCommunityImageUpload", List.of("user", "tenant"));
+    m.put("createCommunityVideoUpload", List.of("user", "tenant"));
+    m.put("completeCommunityVideoUpload", List.of("user", "tenant"));
+    m.put("getCommunityVideo", List.of("user", "tenant"));
+    m.put("listCommunityPosts", List.of("user", "tenant"));
+    m.put("createCommunityPost", List.of("user", "tenant"));
+    m.put("getCommunityPost", List.of("user", "tenant"));
+    m.put("deleteCommunityPost", List.of("user", "tenant"));
+    m.put("listCommunityCategories", List.of("user", "tenant"));
+    m.put("getMySchedule", List.of("user"));
+    m.put("listMyCourses", List.of("user"));
+    m.put("listMyWords", List.of("user"));
+    m.put("addMyWord", List.of("user"));
+    m.put("listClassExams", List.of("tenant"));
+    m.put("listClassExamResults", List.of("tenant"));
     OPERATION_TOKENS = Collections.unmodifiableMap(m);
   }
 
@@ -191,6 +261,14 @@ public final class Meta {
   public static final String SCOPE_TRIAL = "trial";
   /** The scope <code>trade:order:readonly</code>. */
   public static final String SCOPE_TRADE_ORDER_READONLY = "trade:order:readonly";
+  /** The scope <code>trade:booking:readonly</code>. */
+  public static final String SCOPE_TRADE_BOOKING_READONLY = "trade:booking:readonly";
+  /** The scope <code>venue:readonly</code>. */
+  public static final String SCOPE_VENUE_READONLY = "venue:readonly";
+  /** The scope <code>venue</code>. */
+  public static final String SCOPE_VENUE = "venue";
+  /** The scope <code>opening:readonly</code>. */
+  public static final String SCOPE_OPENING_READONLY = "opening:readonly";
   /** The scope <code>review</code>. */
   public static final String SCOPE_REVIEW = "review";
   /** The scope <code>profile:interest:readonly</code>. */
@@ -201,4 +279,16 @@ public final class Meta {
   public static final String SCOPE_PROFILE_LEARNING_READONLY = "profile:learning:readonly";
   /** The scope <code>report:create</code>. */
   public static final String SCOPE_REPORT_CREATE = "report:create";
+  /** The scope <code>community:post</code>. */
+  public static final String SCOPE_COMMUNITY_POST = "community:post";
+  /** The scope <code>me:schedule:readonly</code>. */
+  public static final String SCOPE_ME_SCHEDULE_READONLY = "me:schedule:readonly";
+  /** The scope <code>me:learning:readonly</code>. */
+  public static final String SCOPE_ME_LEARNING_READONLY = "me:learning:readonly";
+  /** The scope <code>me:words:readonly</code>. */
+  public static final String SCOPE_ME_WORDS_READONLY = "me:words:readonly";
+  /** The scope <code>me:words</code>. */
+  public static final String SCOPE_ME_WORDS = "me:words";
+  /** The scope <code>insights:readonly</code>. */
+  public static final String SCOPE_INSIGHTS_READONLY = "insights:readonly";
 }

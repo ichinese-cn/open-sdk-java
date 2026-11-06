@@ -15,6 +15,8 @@ public final class CallSpec {
   final Map<String, String> pathParams = new LinkedHashMap<>();
   Map<String, Object> query;
   Object body;
+  /** Retry a POST like a GET (one the server makes idempotent: a post with its uuid, completing an upload). */
+  boolean idempotent;
 
   /**
    * A call.

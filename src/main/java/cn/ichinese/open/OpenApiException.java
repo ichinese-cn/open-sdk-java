@@ -103,6 +103,15 @@ public class OpenApiException extends RuntimeException {
     return Boolean.TRUE.equals(details.get("never_ask"));
   }
 
+  /**
+   * @return where the person agrees to show their name on posts (409 <code>consent_required</code>): send
+   *     them there, an app cannot agree for them; or null
+   */
+  public String getConsentUrl() {
+    Object u = details.get("consent_url");
+    return u instanceof String ? (String) u : null;
+  }
+
   /** @return true for a refused, not yet asked or undeclared scope (403): degrade gracefully */
   public boolean isScopeError() {
     return status == 403 && reason != null && SCOPE_REASONS.contains(reason);

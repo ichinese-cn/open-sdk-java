@@ -345,6 +345,56 @@ public abstract class Operations {
   }
 
   /**
+   * Schedule a class's sessions (once, or repeating weekly), online or at one of the institution's teaching sites (<code>POST /classes/{class_id}/sessions</code>; tenant / user token; scopes: schedule).
+   *
+   * @param classId the path parameter <code>class_id</code>
+   * @param body the JSON request body (a Map, List or value)
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> createClassSessions(String classId, Object body, RequestOptions options) {
+    return call(new CallSpec("createClassSessions", "POST", "/classes/{class_id}/sessions", "tenant", "user").pathParam("class_id", classId).body(body), options);
+  }
+
+  /**
+   * Schedule a class's sessions (once, or repeating weekly), online or at one of the institution's teaching sites (<code>POST /classes/{class_id}/sessions</code>; tenant / user token; scopes: schedule), with no options: the app token when the operation takes one.
+   *
+   * @param classId the path parameter <code>class_id</code>
+   * @param body the JSON request body (a Map, List or value)
+   * @return the JSON answer
+   */
+  public Map<String, Object> createClassSessions(String classId, Object body) {
+    return createClassSessions(classId, body, null);
+  }
+
+  /**
+   * Change where one session (or this one and the later ones of its series) is held (<code>PUT /classes/{class_id}/sessions/{session_id}/place</code>; tenant / user token; scopes: schedule).
+   *
+   * @param classId the path parameter <code>class_id</code>
+   * @param sessionId the path parameter <code>session_id</code>
+   * @param body the JSON request body (a Map, List or value)
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> setClassSessionPlace(String classId, String sessionId, Object body, RequestOptions options) {
+    return call(new CallSpec("setClassSessionPlace", "PUT", "/classes/{class_id}/sessions/{session_id}/place", "tenant", "user").pathParam("class_id", classId).pathParam("session_id", sessionId).body(body), options);
+  }
+
+  /**
+   * Change where one session (or this one and the later ones of its series) is held (<code>PUT /classes/{class_id}/sessions/{session_id}/place</code>; tenant / user token; scopes: schedule), with no options: the app token when the operation takes one.
+   *
+   * @param classId the path parameter <code>class_id</code>
+   * @param sessionId the path parameter <code>session_id</code>
+   * @param body the JSON request body (a Map, List or value)
+   * @return the JSON answer
+   */
+  public Map<String, Object> setClassSessionPlace(String classId, String sessionId, Object body) {
+    return setClassSessionPlace(classId, sessionId, body, null);
+  }
+
+  /**
    * Cancel a class session (members are notified, the same as cancelling in the timetable) (<code>POST /classes/{class_id}/sessions/{session_id}/cancel</code>; tenant / user token; scopes: schedule).
    *
    * @param classId the path parameter <code>class_id</code>
@@ -1177,9 +1227,9 @@ public abstract class Operations {
   }
 
   /**
-   * Trial lesson slots (by default only those not over yet, by time) (<code>GET /trial/slots</code>; tenant token; scopes: trial).
+   * Trial times (a trial lesson's own times at teaching sites; by default only those not over yet, by time) (<code>GET /trial/slots</code>; tenant token; scopes: trial).
    *
-   * @param query the query parameters (<code>venue_id</code>, <code>include_past</code>, <code>page_size</code>, <code>page_token</code>), or null
+   * @param query the query parameters (<code>venue_id</code>, <code>opening_id</code>, <code>include_past</code>, <code>page_size</code>, <code>page_token</code>), or null
    * @param options which token to call with (null: the app token, when the operation takes one)
    * @return the JSON answer
    * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
@@ -1189,9 +1239,9 @@ public abstract class Operations {
   }
 
   /**
-   * Trial lesson slots (by default only those not over yet, by time) (<code>GET /trial/slots</code>; tenant token; scopes: trial), with no options: the app token when the operation takes one.
+   * Trial times (a trial lesson's own times at teaching sites; by default only those not over yet, by time) (<code>GET /trial/slots</code>; tenant token; scopes: trial), with no options: the app token when the operation takes one.
    *
-   * @param query the query parameters (<code>venue_id</code>, <code>include_past</code>, <code>page_size</code>, <code>page_token</code>), or null
+   * @param query the query parameters (<code>venue_id</code>, <code>opening_id</code>, <code>include_past</code>, <code>page_size</code>, <code>page_token</code>), or null
    * @return the JSON answer
    */
   public Map<String, Object> listTrialSlots(Map<String, Object> query) {
@@ -1220,7 +1270,7 @@ public abstract class Operations {
   }
 
   /**
-   * Schedule trial lesson slots (they can repeat weekly); the teaching site must be published (<code>POST /trial/slots</code>; tenant token; scopes: trial).
+   * Open trial times (they can repeat weekly): add them to an existing trial lesson, or open a new trial draft (<code>POST /trial/slots</code>; tenant token; scopes: trial).
    *
    * @param body the JSON request body (a Map, List or value)
    * @param options which token to call with (null: the app token, when the operation takes one)
@@ -1232,7 +1282,7 @@ public abstract class Operations {
   }
 
   /**
-   * Schedule trial lesson slots (they can repeat weekly); the teaching site must be published (<code>POST /trial/slots</code>; tenant token; scopes: trial), with no options: the app token when the operation takes one.
+   * Open trial times (they can repeat weekly): add them to an existing trial lesson, or open a new trial draft (<code>POST /trial/slots</code>; tenant token; scopes: trial), with no options: the app token when the operation takes one.
    *
    * @param body the JSON request body (a Map, List or value)
    * @return the JSON answer
@@ -1242,7 +1292,7 @@ public abstract class Operations {
   }
 
   /**
-   * Cancel a trial lesson slot (whoever booked it is notified as usual; the booking is cancelled with it) (<code>POST /trial/slots/{slot_id}/cancel</code>; tenant token; scopes: trial).
+   * Close a trial time (no more bookings; bookings already made stay as they are, and nobody is notified) (<code>POST /trial/slots/{slot_id}/cancel</code>; tenant token; scopes: trial).
    *
    * @param slotId the path parameter <code>slot_id</code>
    * @param body the JSON request body (a Map, List or value), or null
@@ -1255,7 +1305,7 @@ public abstract class Operations {
   }
 
   /**
-   * Cancel a trial lesson slot (whoever booked it is notified as usual; the booking is cancelled with it) (<code>POST /trial/slots/{slot_id}/cancel</code>; tenant token; scopes: trial), with no options: the app token when the operation takes one.
+   * Close a trial time (no more bookings; bookings already made stay as they are, and nobody is notified) (<code>POST /trial/slots/{slot_id}/cancel</code>; tenant token; scopes: trial), with no options: the app token when the operation takes one.
    *
    * @param slotId the path parameter <code>slot_id</code>
    * @param body the JSON request body (a Map, List or value), or null
@@ -1263,6 +1313,30 @@ public abstract class Operations {
    */
   public Map<String, Object> cancelTrialSlot(String slotId, Object body) {
     return cancelTrialSlot(slotId, body, null);
+  }
+
+  /**
+   * Fill in (or change) the teacher of a trial draft (<code>PUT /trial/openings/{opening_id}/teacher</code>; tenant token; scopes: trial).
+   *
+   * @param openingId the path parameter <code>opening_id</code>
+   * @param body the JSON request body (a Map, List or value)
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> setTrialTeacher(String openingId, Object body, RequestOptions options) {
+    return call(new CallSpec("setTrialTeacher", "PUT", "/trial/openings/{opening_id}/teacher", "tenant").pathParam("opening_id", openingId).body(body), options);
+  }
+
+  /**
+   * Fill in (or change) the teacher of a trial draft (<code>PUT /trial/openings/{opening_id}/teacher</code>; tenant token; scopes: trial), with no options: the app token when the operation takes one.
+   *
+   * @param openingId the path parameter <code>opening_id</code>
+   * @param body the JSON request body (a Map, List or value)
+   * @return the JSON answer
+   */
+  public Map<String, Object> setTrialTeacher(String openingId, Object body) {
+    return setTrialTeacher(openingId, body, null);
   }
 
   /**
@@ -1331,6 +1405,180 @@ public abstract class Operations {
   }
 
   /**
+   * The institution's teaching sites (campuses), newest first (<code>GET /venues</code>; tenant token; scopes: venue:readonly, venue, trial).
+   *
+   * @param query the query parameters (<code>status</code>, <code>page_size</code>, <code>page_token</code>), or null
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> listVenues(Map<String, Object> query, RequestOptions options) {
+    return call(new CallSpec("listVenues", "GET", "/venues", "tenant").query(query), options);
+  }
+
+  /**
+   * The institution's teaching sites (campuses), newest first (<code>GET /venues</code>; tenant token; scopes: venue:readonly, venue, trial), with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters (<code>status</code>, <code>page_size</code>, <code>page_token</code>), or null
+   * @return the JSON answer
+   */
+  public Map<String, Object> listVenues(Map<String, Object> query) {
+    return listVenues(query, null);
+  }
+
+  /**
+   * Every item of {@link #listVenues}, page after page (the next page is fetched while iterating).
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @param options which token to call with
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listVenuesAll(Map<String, Object> query, RequestOptions options) {
+    return iterate(new CallSpec("listVenues", "GET", "/venues", "tenant").query(query), options);
+  }
+
+  /**
+   * Every item of {@link #listVenues}, page after page, with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listVenuesAll(Map<String, Object> query) {
+    return listVenuesAll(query, null);
+  }
+
+  /**
+   * Create a draft teaching site (campus); it is published in the platform and reviewed as usual (<code>POST /venues</code>; tenant token; scopes: venue).
+   *
+   * @param body the JSON request body (a Map, List or value)
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> createVenue(Object body, RequestOptions options) {
+    return call(new CallSpec("createVenue", "POST", "/venues", "tenant").body(body), options);
+  }
+
+  /**
+   * Create a draft teaching site (campus); it is published in the platform and reviewed as usual (<code>POST /venues</code>; tenant token; scopes: venue), with no options: the app token when the operation takes one.
+   *
+   * @param body the JSON request body (a Map, List or value)
+   * @return the JSON answer
+   */
+  public Map<String, Object> createVenue(Object body) {
+    return createVenue(body, null);
+  }
+
+  /**
+   * One teaching site (of this institution only) (<code>GET /venues/{venue_id}</code>; tenant token; scopes: venue:readonly, venue, trial).
+   *
+   * @param venueId the path parameter <code>venue_id</code>
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> getVenue(String venueId, RequestOptions options) {
+    return call(new CallSpec("getVenue", "GET", "/venues/{venue_id}", "tenant").pathParam("venue_id", venueId), options);
+  }
+
+  /**
+   * One teaching site (of this institution only) (<code>GET /venues/{venue_id}</code>; tenant token; scopes: venue:readonly, venue, trial), with no options: the app token when the operation takes one.
+   *
+   * @param venueId the path parameter <code>venue_id</code>
+   * @return the JSON answer
+   */
+  public Map<String, Object> getVenue(String venueId) {
+    return getVenue(venueId, null);
+  }
+
+  /**
+   * Openings: every class and course opened (group classes, one-to-ones, open classes, trial lessons, video courses), newest first (<code>GET /openings</code>; tenant / user token; scopes: opening:readonly).
+   *
+   * @param query the query parameters (<code>status</code>, <code>kind</code>, <code>course_id</code>, <code>page_size</code>, <code>page_token</code>), or null
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> listOpenings(Map<String, Object> query, RequestOptions options) {
+    return call(new CallSpec("listOpenings", "GET", "/openings", "tenant", "user").query(query), options);
+  }
+
+  /**
+   * Openings: every class and course opened (group classes, one-to-ones, open classes, trial lessons, video courses), newest first (<code>GET /openings</code>; tenant / user token; scopes: opening:readonly), with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters (<code>status</code>, <code>kind</code>, <code>course_id</code>, <code>page_size</code>, <code>page_token</code>), or null
+   * @return the JSON answer
+   */
+  public Map<String, Object> listOpenings(Map<String, Object> query) {
+    return listOpenings(query, null);
+  }
+
+  /**
+   * Every item of {@link #listOpenings}, page after page (the next page is fetched while iterating).
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @param options which token to call with
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listOpeningsAll(Map<String, Object> query, RequestOptions options) {
+    return iterate(new CallSpec("listOpenings", "GET", "/openings", "tenant", "user").query(query), options);
+  }
+
+  /**
+   * Every item of {@link #listOpenings}, page after page, with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listOpeningsAll(Map<String, Object> query) {
+    return listOpeningsAll(query, null);
+  }
+
+  /**
+   * One opening (<code>GET /openings/{opening_id}</code>; tenant / user token; scopes: opening:readonly).
+   *
+   * @param openingId the path parameter <code>opening_id</code>
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> getOpening(String openingId, RequestOptions options) {
+    return call(new CallSpec("getOpening", "GET", "/openings/{opening_id}", "tenant", "user").pathParam("opening_id", openingId), options);
+  }
+
+  /**
+   * One opening (<code>GET /openings/{opening_id}</code>; tenant / user token; scopes: opening:readonly), with no options: the app token when the operation takes one.
+   *
+   * @param openingId the path parameter <code>opening_id</code>
+   * @return the JSON answer
+   */
+  public Map<String, Object> getOpening(String openingId) {
+    return getOpening(openingId, null);
+  }
+
+  /**
+   * One page of the institution's dashboard (read only): enrolment, teaching, teaching sites, income, community and events (<code>GET /insights</code>; tenant token; scopes: insights:readonly).
+   *
+   * @param query the query parameters (<code>tab</code>, <code>range</code>, <code>from</code>, <code>to</code>, <code>compare</code>, <code>venue_id</code>, <code>course_id</code>, <code>currency</code>), or null
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> getInsights(Map<String, Object> query, RequestOptions options) {
+    return call(new CallSpec("getInsights", "GET", "/insights", "tenant").query(query), options);
+  }
+
+  /**
+   * One page of the institution's dashboard (read only): enrolment, teaching, teaching sites, income, community and events (<code>GET /insights</code>; tenant token; scopes: insights:readonly), with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters (<code>tab</code>, <code>range</code>, <code>from</code>, <code>to</code>, <code>compare</code>, <code>venue_id</code>, <code>course_id</code>, <code>currency</code>), or null
+   * @return the JSON answer
+   */
+  public Map<String, Object> getInsights(Map<String, Object> query) {
+    return getInsights(query, null);
+  }
+
+  /**
    * The institution's orders (read-only, for reconciliation). Write operations involving money are not open (<code>GET /trade/orders</code>; tenant token; scopes: trade:order:readonly).
    *
    * @param query the query parameters (<code>status</code>, <code>page_size</code>, <code>page_token</code>), or null
@@ -1371,6 +1619,71 @@ public abstract class Operations {
    */
   public Iterable<Map<String, Object>> listTradeOrdersAll(Map<String, Object> query) {
     return listTradeOrdersAll(query, null);
+  }
+
+  /**
+   * The institution's bookings (one-to-ones and trial lessons, read only for reconciliation), latest lesson first (<code>GET /bookings</code>; tenant token; scopes: trade:booking:readonly).
+   *
+   * @param query the query parameters (<code>status</code>, <code>kind</code>, <code>opening_id</code>, <code>from</code>, <code>to</code>, <code>page_size</code>, <code>page_token</code>), or null
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> listBookings(Map<String, Object> query, RequestOptions options) {
+    return call(new CallSpec("listBookings", "GET", "/bookings", "tenant").query(query), options);
+  }
+
+  /**
+   * The institution's bookings (one-to-ones and trial lessons, read only for reconciliation), latest lesson first (<code>GET /bookings</code>; tenant token; scopes: trade:booking:readonly), with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters (<code>status</code>, <code>kind</code>, <code>opening_id</code>, <code>from</code>, <code>to</code>, <code>page_size</code>, <code>page_token</code>), or null
+   * @return the JSON answer
+   */
+  public Map<String, Object> listBookings(Map<String, Object> query) {
+    return listBookings(query, null);
+  }
+
+  /**
+   * Every item of {@link #listBookings}, page after page (the next page is fetched while iterating).
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @param options which token to call with
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listBookingsAll(Map<String, Object> query, RequestOptions options) {
+    return iterate(new CallSpec("listBookings", "GET", "/bookings", "tenant").query(query), options);
+  }
+
+  /**
+   * Every item of {@link #listBookings}, page after page, with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listBookingsAll(Map<String, Object> query) {
+    return listBookingsAll(query, null);
+  }
+
+  /**
+   * One booked lesson (<code>GET /bookings/{booking_id}</code>; tenant token; scopes: trade:booking:readonly).
+   *
+   * @param bookingId the path parameter <code>booking_id</code>
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> getBooking(String bookingId, RequestOptions options) {
+    return call(new CallSpec("getBooking", "GET", "/bookings/{booking_id}", "tenant").pathParam("booking_id", bookingId), options);
+  }
+
+  /**
+   * One booked lesson (<code>GET /bookings/{booking_id}</code>; tenant token; scopes: trade:booking:readonly), with no options: the app token when the operation takes one.
+   *
+   * @param bookingId the path parameter <code>booking_id</code>
+   * @return the JSON answer
+   */
+  public Map<String, Object> getBooking(String bookingId) {
+    return getBooking(bookingId, null);
   }
 
   /**
@@ -1569,5 +1882,471 @@ public abstract class Operations {
    */
   public Map<String, Object> reportOnBehalf(Object body) {
     return reportOnBehalf(body, null);
+  }
+
+  /**
+   * Get an upload URL for an image (it is re-encoded and its EXIF removed when the post is made) (<code>POST /community/images</code>; user / tenant token; scopes: community:post).
+   *
+   * @param body the JSON request body (a Map, List or value)
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> createCommunityImageUpload(Object body, RequestOptions options) {
+    return call(new CallSpec("createCommunityImageUpload", "POST", "/community/images", "user", "tenant").body(body), options);
+  }
+
+  /**
+   * Get an upload URL for an image (it is re-encoded and its EXIF removed when the post is made) (<code>POST /community/images</code>; user / tenant token; scopes: community:post), with no options: the app token when the operation takes one.
+   *
+   * @param body the JSON request body (a Map, List or value)
+   * @return the JSON answer
+   */
+  public Map<String, Object> createCommunityImageUpload(Object body) {
+    return createCommunityImageUpload(body, null);
+  }
+
+  /**
+   * Get an upload URL for a video (up to 4 GB, 1 hour) (<code>POST /community/videos</code>; user / tenant token; scopes: community:post).
+   *
+   * @param body the JSON request body (a Map, List or value)
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> createCommunityVideoUpload(Object body, RequestOptions options) {
+    return call(new CallSpec("createCommunityVideoUpload", "POST", "/community/videos", "user", "tenant").body(body), options);
+  }
+
+  /**
+   * Get an upload URL for a video (up to 4 GB, 1 hour) (<code>POST /community/videos</code>; user / tenant token; scopes: community:post), with no options: the app token when the operation takes one.
+   *
+   * @param body the JSON request body (a Map, List or value)
+   * @return the JSON answer
+   */
+  public Map<String, Object> createCommunityVideoUpload(Object body) {
+    return createCommunityVideoUpload(body, null);
+  }
+
+  /**
+   * The upload is done; start transcoding (calling it again has no side effects) (<code>POST /community/videos/{asset_id}/complete</code>; user / tenant token; scopes: community:post).
+   *
+   * @param assetId the path parameter <code>asset_id</code>
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> completeCommunityVideoUpload(String assetId, RequestOptions options) {
+    return call(new CallSpec("completeCommunityVideoUpload", "POST", "/community/videos/{asset_id}/complete", "user", "tenant").pathParam("asset_id", assetId), options);
+  }
+
+  /**
+   * The upload is done; start transcoding (calling it again has no side effects) (<code>POST /community/videos/{asset_id}/complete</code>; user / tenant token; scopes: community:post), with no options: the app token when the operation takes one.
+   *
+   * @param assetId the path parameter <code>asset_id</code>
+   * @return the JSON answer
+   */
+  public Map<String, Object> completeCommunityVideoUpload(String assetId) {
+    return completeCommunityVideoUpload(assetId, null);
+  }
+
+  /**
+   * Transcoding status (only for videos this app uploaded for this person) (<code>GET /community/videos/{asset_id}</code>; user / tenant token; scopes: community:post).
+   *
+   * @param assetId the path parameter <code>asset_id</code>
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> getCommunityVideo(String assetId, RequestOptions options) {
+    return call(new CallSpec("getCommunityVideo", "GET", "/community/videos/{asset_id}", "user", "tenant").pathParam("asset_id", assetId), options);
+  }
+
+  /**
+   * Transcoding status (only for videos this app uploaded for this person) (<code>GET /community/videos/{asset_id}</code>; user / tenant token; scopes: community:post), with no options: the app token when the operation takes one.
+   *
+   * @param assetId the path parameter <code>asset_id</code>
+   * @return the JSON answer
+   */
+  public Map<String, Object> getCommunityVideo(String assetId) {
+    return getCommunityVideo(assetId, null);
+  }
+
+  /**
+   * Posts this app made in this person's name (the person's own posts and other apps' posts are not visible) (<code>GET /community/posts</code>; user / tenant token; scopes: community:post).
+   *
+   * @param query the query parameters (<code>page_size</code>, <code>page_token</code>), or null
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> listCommunityPosts(Map<String, Object> query, RequestOptions options) {
+    return call(new CallSpec("listCommunityPosts", "GET", "/community/posts", "user", "tenant").query(query), options);
+  }
+
+  /**
+   * Posts this app made in this person's name (the person's own posts and other apps' posts are not visible) (<code>GET /community/posts</code>; user / tenant token; scopes: community:post), with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters (<code>page_size</code>, <code>page_token</code>), or null
+   * @return the JSON answer
+   */
+  public Map<String, Object> listCommunityPosts(Map<String, Object> query) {
+    return listCommunityPosts(query, null);
+  }
+
+  /**
+   * Every item of {@link #listCommunityPosts}, page after page (the next page is fetched while iterating).
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @param options which token to call with
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listCommunityPostsAll(Map<String, Object> query, RequestOptions options) {
+    return iterate(new CallSpec("listCommunityPosts", "GET", "/community/posts", "user", "tenant").query(query), options);
+  }
+
+  /**
+   * Every item of {@link #listCommunityPosts}, page after page, with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listCommunityPostsAll(Map<String, Object> query) {
+    return listCommunityPostsAll(query, null);
+  }
+
+  /**
+   * Publish a public post in this person's name (text, up to 9 images or 1 video, up to 10 topics) (<code>POST /community/posts</code>; user / tenant token; scopes: community:post).
+   *
+   * @param body the JSON request body (a Map, List or value)
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> createCommunityPost(Object body, RequestOptions options) {
+    return call(new CallSpec("createCommunityPost", "POST", "/community/posts", "user", "tenant").body(body), options);
+  }
+
+  /**
+   * Publish a public post in this person's name (text, up to 9 images or 1 video, up to 10 topics) (<code>POST /community/posts</code>; user / tenant token; scopes: community:post), with no options: the app token when the operation takes one.
+   *
+   * @param body the JSON request body (a Map, List or value)
+   * @return the JSON answer
+   */
+  public Map<String, Object> createCommunityPost(Object body) {
+    return createCommunityPost(body, null);
+  }
+
+  /**
+   * The status of one post (only posts this app made; anything else is 404) (<code>GET /community/posts/{post_id}</code>; user / tenant token; scopes: community:post).
+   *
+   * @param postId the path parameter <code>post_id</code>
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> getCommunityPost(String postId, RequestOptions options) {
+    return call(new CallSpec("getCommunityPost", "GET", "/community/posts/{post_id}", "user", "tenant").pathParam("post_id", postId), options);
+  }
+
+  /**
+   * The status of one post (only posts this app made; anything else is 404) (<code>GET /community/posts/{post_id}</code>; user / tenant token; scopes: community:post), with no options: the app token when the operation takes one.
+   *
+   * @param postId the path parameter <code>post_id</code>
+   * @return the JSON answer
+   */
+  public Map<String, Object> getCommunityPost(String postId) {
+    return getCommunityPost(postId, null);
+  }
+
+  /**
+   * Delete a post (only posts this app made; anything else is 404) (<code>DELETE /community/posts/{post_id}</code>; user / tenant token; scopes: community:post).
+   *
+   * @param postId the path parameter <code>post_id</code>
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return null (the operation answers 204 No Content)
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> deleteCommunityPost(String postId, RequestOptions options) {
+    return call(new CallSpec("deleteCommunityPost", "DELETE", "/community/posts/{post_id}", "user", "tenant").pathParam("post_id", postId), options);
+  }
+
+  /**
+   * Delete a post (only posts this app made; anything else is 404) (<code>DELETE /community/posts/{post_id}</code>; user / tenant token; scopes: community:post), with no options: the app token when the operation takes one.
+   *
+   * @param postId the path parameter <code>post_id</code>
+   * @return null (the operation answers 204 No Content)
+   */
+  public Map<String, Object> deleteCommunityPost(String postId) {
+    return deleteCommunityPost(postId, null);
+  }
+
+  /**
+   * Categories a post can be filed under (those enabled in this region) (<code>GET /community/categories</code>; user / tenant token; scopes: community:post).
+   *
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> listCommunityCategories(RequestOptions options) {
+    return call(new CallSpec("listCommunityCategories", "GET", "/community/categories", "user", "tenant"), options);
+  }
+
+  /**
+   * Categories a post can be filed under (those enabled in this region) (<code>GET /community/categories</code>; user / tenant token; scopes: community:post), with no options: the app token when the operation takes one.
+   *
+   * @return the JSON answer
+   */
+  public Map<String, Object> listCommunityCategories() {
+    return listCommunityCategories(null);
+  }
+
+  /**
+   * This person's timetable: their sessions, the events they signed up for, confirmed trial lessons and exams (for calendar apps; read-only) (<code>GET /me/schedule</code>; user token; scopes: me:schedule:readonly).
+   *
+   * @param query the query parameters (<code>from</code> (required), <code>to</code> (required), <code>page_size</code>, <code>page_token</code>), or null
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> getMySchedule(Map<String, Object> query, RequestOptions options) {
+    return call(new CallSpec("getMySchedule", "GET", "/me/schedule", "user").query(query), options);
+  }
+
+  /**
+   * This person's timetable: their sessions, the events they signed up for, confirmed trial lessons and exams (for calendar apps; read-only) (<code>GET /me/schedule</code>; user token; scopes: me:schedule:readonly), with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters (<code>from</code> (required), <code>to</code> (required), <code>page_size</code>, <code>page_token</code>), or null
+   * @return the JSON answer
+   */
+  public Map<String, Object> getMySchedule(Map<String, Object> query) {
+    return getMySchedule(query, null);
+  }
+
+  /**
+   * Every item of {@link #getMySchedule}, page after page (the next page is fetched while iterating).
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @param options which token to call with
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> getMyScheduleAll(Map<String, Object> query, RequestOptions options) {
+    return iterate(new CallSpec("getMySchedule", "GET", "/me/schedule", "user").query(query), options);
+  }
+
+  /**
+   * Every item of {@link #getMySchedule}, page after page, with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> getMyScheduleAll(Map<String, Object> query) {
+    return getMyScheduleAll(query, null);
+  }
+
+  /**
+   * The courses this person is studying and their progress (lessons completed, last studied; level and goals belong to the gold-only profile and are not here) (<code>GET /me/courses</code>; user token; scopes: me:learning:readonly).
+   *
+   * @param query the query parameters (<code>page_size</code>, <code>page_token</code>), or null
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> listMyCourses(Map<String, Object> query, RequestOptions options) {
+    return call(new CallSpec("listMyCourses", "GET", "/me/courses", "user").query(query), options);
+  }
+
+  /**
+   * The courses this person is studying and their progress (lessons completed, last studied; level and goals belong to the gold-only profile and are not here) (<code>GET /me/courses</code>; user token; scopes: me:learning:readonly), with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters (<code>page_size</code>, <code>page_token</code>), or null
+   * @return the JSON answer
+   */
+  public Map<String, Object> listMyCourses(Map<String, Object> query) {
+    return listMyCourses(query, null);
+  }
+
+  /**
+   * Every item of {@link #listMyCourses}, page after page (the next page is fetched while iterating).
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @param options which token to call with
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listMyCoursesAll(Map<String, Object> query, RequestOptions options) {
+    return iterate(new CallSpec("listMyCourses", "GET", "/me/courses", "user").query(query), options);
+  }
+
+  /**
+   * Every item of {@link #listMyCourses}, page after page, with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listMyCoursesAll(Map<String, Object> query) {
+    return listMyCoursesAll(query, null);
+  }
+
+  /**
+   * This person's word bank: words, pinyin, review state (no meanings, and review records cannot be changed) (<code>GET /me/words</code>; user token; scopes: me:words:readonly, me:words).
+   *
+   * @param query the query parameters (<code>page_size</code>, <code>page_token</code>), or null
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> listMyWords(Map<String, Object> query, RequestOptions options) {
+    return call(new CallSpec("listMyWords", "GET", "/me/words", "user").query(query), options);
+  }
+
+  /**
+   * This person's word bank: words, pinyin, review state (no meanings, and review records cannot be changed) (<code>GET /me/words</code>; user token; scopes: me:words:readonly, me:words), with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters (<code>page_size</code>, <code>page_token</code>), or null
+   * @return the JSON answer
+   */
+  public Map<String, Object> listMyWords(Map<String, Object> query) {
+    return listMyWords(query, null);
+  }
+
+  /**
+   * Every item of {@link #listMyWords}, page after page (the next page is fetched while iterating).
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @param options which token to call with
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listMyWordsAll(Map<String, Object> query, RequestOptions options) {
+    return iterate(new CallSpec("listMyWords", "GET", "/me/words", "user").query(query), options);
+  }
+
+  /**
+   * Every item of {@link #listMyWords}, page after page, with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listMyWordsAll(Map<String, Object> query) {
+    return listMyWordsAll(query, null);
+  }
+
+  /**
+   * Add a word to this person's word bank (unchanged if it is already there; its source is recorded as this app) (<code>POST /me/words</code>; user token; scopes: me:words).
+   *
+   * @param body the JSON request body (a Map, List or value)
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> addMyWord(Object body, RequestOptions options) {
+    return call(new CallSpec("addMyWord", "POST", "/me/words", "user").body(body), options);
+  }
+
+  /**
+   * Add a word to this person's word bank (unchanged if it is already there; its source is recorded as this app) (<code>POST /me/words</code>; user token; scopes: me:words), with no options: the app token when the operation takes one.
+   *
+   * @param body the JSON request body (a Map, List or value)
+   * @return the JSON answer
+   */
+  public Map<String, Object> addMyWord(Object body) {
+    return addMyWord(body, null);
+  }
+
+  /**
+   * A class's exams (tenant tokens only, own institution) (<code>GET /classes/{class_id}/exams</code>; tenant token; scopes: grade:readonly).
+   *
+   * @param classId the path parameter <code>class_id</code>
+   * @param query the query parameters (<code>page_size</code>, <code>page_token</code>), or null
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> listClassExams(String classId, Map<String, Object> query, RequestOptions options) {
+    return call(new CallSpec("listClassExams", "GET", "/classes/{class_id}/exams", "tenant").pathParam("class_id", classId).query(query), options);
+  }
+
+  /**
+   * A class's exams (tenant tokens only, own institution) (<code>GET /classes/{class_id}/exams</code>; tenant token; scopes: grade:readonly), with no options: the app token when the operation takes one.
+   *
+   * @param classId the path parameter <code>class_id</code>
+   * @param query the query parameters (<code>page_size</code>, <code>page_token</code>), or null
+   * @return the JSON answer
+   */
+  public Map<String, Object> listClassExams(String classId, Map<String, Object> query) {
+    return listClassExams(classId, query, null);
+  }
+
+  /**
+   * Every item of {@link #listClassExams}, page after page (the next page is fetched while iterating).
+   *
+   * @param classId the path parameter <code>class_id</code>
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @param options which token to call with
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listClassExamsAll(String classId, Map<String, Object> query, RequestOptions options) {
+    return iterate(new CallSpec("listClassExams", "GET", "/classes/{class_id}/exams", "tenant").pathParam("class_id", classId).query(query), options);
+  }
+
+  /**
+   * Every item of {@link #listClassExams}, page after page, with no options: the app token when the operation takes one.
+   *
+   * @param classId the path parameter <code>class_id</code>
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listClassExamsAll(String classId, Map<String, Object> query) {
+    return listClassExamsAll(classId, query, null);
+  }
+
+  /**
+   * Each learner's result in one exam (scores only once released; tenant tokens only, own institution) (<code>GET /classes/{class_id}/exams/{exam_id}/results</code>; tenant token; scopes: grade:readonly).
+   *
+   * @param classId the path parameter <code>class_id</code>
+   * @param examId the path parameter <code>exam_id</code>
+   * @param query the query parameters (<code>page_size</code>, <code>page_token</code>), or null
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> listClassExamResults(String classId, String examId, Map<String, Object> query, RequestOptions options) {
+    return call(new CallSpec("listClassExamResults", "GET", "/classes/{class_id}/exams/{exam_id}/results", "tenant").pathParam("class_id", classId).pathParam("exam_id", examId).query(query), options);
+  }
+
+  /**
+   * Each learner's result in one exam (scores only once released; tenant tokens only, own institution) (<code>GET /classes/{class_id}/exams/{exam_id}/results</code>; tenant token; scopes: grade:readonly), with no options: the app token when the operation takes one.
+   *
+   * @param classId the path parameter <code>class_id</code>
+   * @param examId the path parameter <code>exam_id</code>
+   * @param query the query parameters (<code>page_size</code>, <code>page_token</code>), or null
+   * @return the JSON answer
+   */
+  public Map<String, Object> listClassExamResults(String classId, String examId, Map<String, Object> query) {
+    return listClassExamResults(classId, examId, query, null);
+  }
+
+  /**
+   * Every item of {@link #listClassExamResults}, page after page (the next page is fetched while iterating).
+   *
+   * @param classId the path parameter <code>class_id</code>
+   * @param examId the path parameter <code>exam_id</code>
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @param options which token to call with
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listClassExamResultsAll(String classId, String examId, Map<String, Object> query, RequestOptions options) {
+    return iterate(new CallSpec("listClassExamResults", "GET", "/classes/{class_id}/exams/{exam_id}/results", "tenant").pathParam("class_id", classId).pathParam("exam_id", examId).query(query), options);
+  }
+
+  /**
+   * Every item of {@link #listClassExamResults}, page after page, with no options: the app token when the operation takes one.
+   *
+   * @param classId the path parameter <code>class_id</code>
+   * @param examId the path parameter <code>exam_id</code>
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listClassExamResultsAll(String classId, String examId, Map<String, Object> query) {
+    return listClassExamResultsAll(classId, examId, query, null);
   }
 }

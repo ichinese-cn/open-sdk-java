@@ -1,6 +1,6 @@
 # iChinese open platform SDK for Java
 
-> **Prerelease 1.0.0-rc.2.** 这是预发布版，开放平台还没有正式开放，SDK 的默认地址可能连不上。This is a prerelease: the open platform is not open to the public yet, so the SDK's default address may not answer.
+> **Prerelease 1.0.0-rc.3.** 这是预发布版，开放平台还没有正式开放，SDK 的默认地址可能连不上。This is a prerelease: the open platform is not open to the public yet, so the SDK's default address may not answer.
 
 爱中文开放平台的 Java 服务端 SDK：开放接口（`/open-apis/v1`）的每个接口都是一个方法（由契约生成），
 另外负责取应用令牌和机构令牌并在过期前续期、限流和服务端错误的退避重试、分页、类型化的错误、网页免登的换码，
@@ -167,6 +167,63 @@ StreamSupport.stream(client.listClassesAll(null, tenant).spliterator(), false)
 ```
 
 For one page, call the plain method with `page_size` / `page_token` in the query.
+
+## Posting in a person's name
+
+With a user token that has the `community:post` scope, four methods do the uploads and the waiting:
+
+| method | |
+|---|---|
+| `uploadImage(userToken, bytes, contentType)` | gets an upload slot, PUTs the image there, returns its `key` |
+| `uploadVideo(userToken, path, contentType)` (or `bytes, filename, contentType`) | gets a slot, streams the file there, starts transcoding; returns the video (`asset_id`) |
+| `waitVideoReady(userToken, assetId[, timeout, interval])` | polls until the video is `ready` (default 30 min, 2 s doubling to 15 s); throws reason `video_failed`, or code `TIMEOUT` |
+| `createPost(userToken, post)` | posts; adds a `uuid` when you give none, so retries never post twice |
+
+```java
+String key = client.uploadImage(userToken, Files.readAllBytes(Path.of("photo.jpg")), "image/jpeg");
+Map<String, Object> post = new HashMap<>();
+post.put("body", "今天学了新词 #HSK3");
+post.put("images", List.of(Map.of("key", key)));
+try {
+  System.out.println(client.createPost(userToken, post).get("url"));
+} catch (OpenApiException e) {
+  if (!"consent_required".equals(e.getReason())) throw e;
+  System.out.println(e.getConsentUrl()); // only the person can agree to show their name on posts, here
+}
+
+Map<String, Object> video = client.uploadVideo(userToken, Path.of("lesson.mp4"), "video/mp4");
+String assetId = (String) video.get("asset_id");
+client.waitVideoReady(userToken, assetId);
+client.createPost(userToken, Map.of("title", "第一课", "video", Map.of("asset_id", assetId)));
+```
+
+A post has either images (up to 9) or one video. Errors keep the server's reason: `consent_required`,
+`video_not_ready`, `post_rate_limited`, `app_user_daily_limit`, `daily_quota_exceeded`,
+`minor_not_allowed`, `app_post_stopped`, …. `createPost` and completing a video upload are retried
+after server errors like a GET (the server makes them idempotent).
+
+### Posting as the institution (机构号)
+
+With the institution's tenant key the same helpers post as its community account (its name and logo, the
+post says it came from your app): `uploadImageAsOrg`, `uploadVideoAsOrg`, `waitVideoReadyAsOrg`,
+`createPostAsOrg`. The institution must have installed the app and granted `community:post`; before its
+homepage was first published there is no account yet (409 `no_org_account`). Limits and review are the same.
+
+```java
+String key = client.uploadImageAsOrg(tenantKey, bytes, "image/png");
+client.createPostAsOrg(tenantKey, Map.of("body", "秋季班开始报名", "images", List.of(Map.of("key", key))));
+```
+
+### The institution's dashboard
+
+`getAllInsights` reads every page of the institution's dashboard the API offers (`GET /insights`, scope
+`insights:readonly`, tenant token): the default page first, then each other tab it lists, with the same
+query. It returns tab → page. Fewer than five people come back as null with `withheld: true`; money is
+per currency, never converted.
+
+```java
+Map<String, Map<String, Object>> pages = client.getAllInsights(tenantKey, Map.of("range", "30d"));
+```
 
 ## Examples
 

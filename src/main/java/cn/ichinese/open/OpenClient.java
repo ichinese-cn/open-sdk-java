@@ -3,6 +3,7 @@ package cn.ichinese.open;
 import cn.ichinese.open.gen.Meta;
 import cn.ichinese.open.gen.Operations;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -10,6 +11,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
@@ -315,6 +319,318 @@ public class OpenClient extends Operations {
     tokens.clear();
   }
 
+  // ── posting in a person's name (D105), and as the institution (M6.21 K2) ──
+
+  /**
+   * Uploads an image for a post: asks for an upload slot, PUTs the bytes there and returns the
+   * <code>key</code> to put in <code>images[].key</code>. Up to 10 MB; jpeg, png, webp or gif.
+   *
+   * @param userAccessToken the person's user token (scope <code>community:post</code>)
+   * @param data the image
+   * @param contentType <code>image/jpeg</code>, <code>image/png</code>, <code>image/webp</code> or <code>image/gif</code>
+   * @return the image's key
+   */
+  public String uploadImage(String userAccessToken, byte[] data, String contentType) {
+    return uploadImageWith(RequestOptions.user(userAccessToken), data, contentType);
+  }
+
+  /**
+   * {@link #uploadImage(String, byte[], String)} for a post of the institution (its tenant token; the
+   * institution granted <code>community:post</code>).
+   *
+   * @param tenantKey the institution's tenant key
+   * @param data the image
+   * @param contentType <code>image/jpeg</code>, <code>image/png</code>, <code>image/webp</code> or <code>image/gif</code>
+   * @return the image's key
+   */
+  public String uploadImageAsOrg(String tenantKey, byte[] data, String contentType) {
+    return uploadImageWith(RequestOptions.tenant(tenantKey), data, contentType);
+  }
+
+  private String uploadImageWith(RequestOptions who, byte[] data, String contentType) {
+    Map<String, Object> slot = createCommunityImageUpload(
+        mapOf("content_type", contentType, "size_bytes", data.length), who);
+    putUpload(String.valueOf(slot.get("upload_url")), slot.get("headers"), HttpRequest.BodyPublishers.ofByteArray(data));
+    return (String) slot.get("key");
+  }
+
+  /**
+   * Uploads a video file for a post (up to 4 GB, 1 hour), streamed from disk: asks for an upload slot,
+   * PUTs the file there and starts transcoding. Wait for <code>ready</code> with {@link
+   * #waitVideoReady(String, String)} before posting.
+   *
+   * @param userAccessToken the person's user token (scope <code>community:post</code>)
+   * @param file the video (its file name goes with it)
+   * @param contentType e.g. <code>video/mp4</code>
+   * @return the video's status (<code>asset_id</code>, <code>status</code>)
+   */
+  public Map<String, Object> uploadVideo(String userAccessToken, Path file, String contentType) {
+    return uploadVideoFile(RequestOptions.user(userAccessToken), file, contentType);
+  }
+
+  /**
+   * {@link #uploadVideo(String, Path, String)} for a post of the institution.
+   *
+   * @param tenantKey the institution's tenant key
+   * @param file the video (its file name goes with it)
+   * @param contentType e.g. <code>video/mp4</code>
+   * @return the video's status (<code>asset_id</code>, <code>status</code>)
+   */
+  public Map<String, Object> uploadVideoAsOrg(String tenantKey, Path file, String contentType) {
+    return uploadVideoFile(RequestOptions.tenant(tenantKey), file, contentType);
+  }
+
+  private Map<String, Object> uploadVideoFile(RequestOptions who, Path file, String contentType) {
+    long size;
+    HttpRequest.BodyPublisher body;
+    try {
+      size = Files.size(file);
+      body = HttpRequest.BodyPublishers.ofFile(file);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    return uploadVideoWith(who, body, size, file.getFileName().toString(), contentType);
+  }
+
+  /**
+   * Uploads a video held in memory for a post; see {@link #uploadVideo(String, Path, String)}.
+   *
+   * @param userAccessToken the person's user token (scope <code>community:post</code>)
+   * @param data the video
+   * @param filename its file name
+   * @param contentType e.g. <code>video/mp4</code>
+   * @return the video's status (<code>asset_id</code>, <code>status</code>)
+   */
+  public Map<String, Object> uploadVideo(String userAccessToken, byte[] data, String filename, String contentType) {
+    return uploadVideoWith(
+        RequestOptions.user(userAccessToken), HttpRequest.BodyPublishers.ofByteArray(data), data.length, filename, contentType);
+  }
+
+  /**
+   * {@link #uploadVideo(String, byte[], String, String)} for a post of the institution.
+   *
+   * @param tenantKey the institution's tenant key
+   * @param data the video
+   * @param filename its file name
+   * @param contentType e.g. <code>video/mp4</code>
+   * @return the video's status (<code>asset_id</code>, <code>status</code>)
+   */
+  public Map<String, Object> uploadVideoAsOrg(String tenantKey, byte[] data, String filename, String contentType) {
+    return uploadVideoWith(
+        RequestOptions.tenant(tenantKey), HttpRequest.BodyPublishers.ofByteArray(data), data.length, filename, contentType);
+  }
+
+  private Map<String, Object> uploadVideoWith(
+      RequestOptions who, HttpRequest.BodyPublisher body, long size, String filename, String contentType) {
+    Map<String, Object> slot = createCommunityVideoUpload(
+        mapOf("filename", filename, "content_type", contentType, "size_bytes", size), who);
+    Map<String, Object> upload = asMap(slot.get("upload"));
+    putUpload(String.valueOf(upload.get("url")), upload.get("headers"), body);
+    // Calling it again has no effect, so it is retried like a GET.
+    CallSpec complete = new CallSpec(
+            "completeCommunityVideoUpload", "POST", "/community/videos/{asset_id}/complete", "user", "tenant")
+        .pathParam("asset_id", String.valueOf(slot.get("asset_id")));
+    complete.idempotent = true;
+    return call(complete, who);
+  }
+
+  /**
+   * Waits up to 30 minutes until a video has been transcoded; see {@link #waitVideoReady(String, String,
+   * Duration, Duration)}.
+   *
+   * @param userAccessToken the person's user token
+   * @param assetId the video's <code>asset_id</code>
+   * @return the video (<code>status</code> ready)
+   */
+  public Map<String, Object> waitVideoReady(String userAccessToken, String assetId) {
+    return waitVideoReady(userAccessToken, assetId, Duration.ofMinutes(30), Duration.ofSeconds(2));
+  }
+
+  /**
+   * Waits until a video has been transcoded and returns it (<code>status</code> ready), looking every
+   * <code>interval</code>, doubling up to 15 seconds. A failed transcode throws an {@link
+   * OpenApiException} with reason <code>video_failed</code> (upload another file); running out of time
+   * throws one with code <code>TIMEOUT</code> (reason <code>video_not_ready</code>). You also get the
+   * <code>community.video_ready</code> event.
+   *
+   * @param userAccessToken the person's user token
+   * @param assetId the video's <code>asset_id</code>
+   * @param timeout how long to wait at most
+   * @param interval the first wait between two looks
+   * @return the video (<code>status</code> ready)
+   */
+  public Map<String, Object> waitVideoReady(String userAccessToken, String assetId, Duration timeout, Duration interval) {
+    return waitVideoWith(RequestOptions.user(userAccessToken), assetId, timeout, interval);
+  }
+
+  /**
+   * {@link #waitVideoReady(String, String, Duration, Duration)} for a video uploaded for the institution.
+   *
+   * @param tenantKey the institution's tenant key
+   * @param assetId the video's <code>asset_id</code>
+   * @param timeout how long to wait at most
+   * @param interval the first wait between two looks
+   * @return the video (<code>status</code> ready)
+   */
+  public Map<String, Object> waitVideoReadyAsOrg(String tenantKey, String assetId, Duration timeout, Duration interval) {
+    return waitVideoWith(RequestOptions.tenant(tenantKey), assetId, timeout, interval);
+  }
+
+  private Map<String, Object> waitVideoWith(RequestOptions who, String assetId, Duration timeout, Duration interval) {
+    long deadline = System.nanoTime() + timeout.toNanos();
+    long wait = Math.max(1, interval.toMillis());
+    long longest = Math.max(wait, 15_000);
+    while (true) {
+      Map<String, Object> video = getCommunityVideo(assetId, who);
+      Object status = video == null ? null : video.get("status");
+      if ("ready".equals(status)) return video;
+      if ("failed".equals(status)) {
+        Object error = video.get("error");
+        throw new OpenApiException(
+            409,
+            "CONFLICT",
+            "video " + assetId + " could not be transcoded" + (error != null ? " (" + error + ")" : ""),
+            null,
+            mapOf("reason", "video_failed", "asset_id", assetId, "error", error),
+            null,
+            null);
+      }
+      long left = (deadline - System.nanoTime()) / 1_000_000;
+      if (left <= 0) {
+        throw new OpenApiException(
+            0,
+            "TIMEOUT",
+            "video " + assetId + " is not ready yet (" + status + ")",
+            null,
+            mapOf("reason", "video_not_ready", "asset_id", assetId, "status", status),
+            null,
+            null);
+      }
+      sleep(Math.min(wait, left));
+      wait = Math.min(wait * 2, longest);
+    }
+  }
+
+  /**
+   * Posts in the person's name. Without a <code>uuid</code> the SDK makes one, so its own retries never
+   * post twice; give your own <code>uuid</code> to make your retries safe too (one post per uuid within
+   * an hour). Errors keep the server's reason: <code>consent_required</code> (send the person to {@link
+   * OpenApiException#getConsentUrl()}), <code>video_not_ready</code>, <code>video_failed</code>,
+   * <code>post_rate_limited</code>, <code>app_user_daily_limit</code>, <code>daily_quota_exceeded</code>,
+   * <code>minor_not_allowed</code>, <code>app_post_stopped</code>, …
+   *
+   * @param userAccessToken the person's user token (scope <code>community:post</code>)
+   * @param post the contract's CreateCommunityPost (<code>title</code>, <code>body</code>,
+   *     <code>images</code> or <code>video</code>, <code>topics</code>, <code>category</code>, …)
+   * @return the post (<code>post_id</code>, <code>status</code>, <code>url</code>, …)
+   */
+  public Map<String, Object> createPost(String userAccessToken, Map<String, Object> post) {
+    return createPostWith(RequestOptions.user(userAccessToken), post);
+  }
+
+  /**
+   * Posts as the institution, with its community account (its name and logo; the post says it came from
+   * this app). The institution must have installed the app and granted <code>community:post</code>;
+   * before its homepage was first published there is no account yet (409 <code>no_org_account</code>).
+   * The same limits, review and <code>uuid</code> handling as {@link #createPost(String, Map)}.
+   *
+   * @param tenantKey the institution's tenant key
+   * @param post the contract's CreateCommunityPost
+   * @return the post (<code>post_id</code>, <code>status</code>, <code>url</code>, …)
+   */
+  public Map<String, Object> createPostAsOrg(String tenantKey, Map<String, Object> post) {
+    return createPostWith(RequestOptions.tenant(tenantKey), post);
+  }
+
+  // ── the institution's dashboard (M6.21 K2) ──────────────────────────────
+
+  /**
+   * Every page of the institution's dashboard the API offers (<code>GET /insights</code>,
+   * <code>insights:readonly</code>): the default page first, then each other tab it lists in <code>tabs</code>,
+   * with the same query (range, from/to, compare, venue_id, course_id, currency; a <code>tab</code> in it is
+   * ignored). Fewer than five people come back as null with <code>withheld: true</code>; money is per currency,
+   * never converted.
+   *
+   * @param tenantKey the institution's tenant key
+   * @param query the query parameters other than <code>tab</code>, or null
+   * @return tab → page, in the order read
+   */
+  public Map<String, Map<String, Object>> getAllInsights(String tenantKey, Map<String, Object> query) {
+    Map<String, Object> base = new LinkedHashMap<>(query == null ? Map.of() : query);
+    base.remove("tab");
+    RequestOptions who = RequestOptions.tenant(tenantKey);
+    Map<String, Object> first = getInsights(base, who);
+    Map<String, Map<String, Object>> out = new LinkedHashMap<>();
+    out.put(String.valueOf(first.get("tab")), first);
+    Object tabs = first.get("tabs");
+    if (tabs instanceof List) {
+      for (Object t : (List<?>) tabs) {
+        String tab = String.valueOf(t);
+        if (out.containsKey(tab)) continue;
+        Map<String, Object> q = new LinkedHashMap<>(base);
+        q.put("tab", tab);
+        out.put(tab, getInsights(q, who));
+      }
+    }
+    return out;
+  }
+
+  private Map<String, Object> createPostWith(RequestOptions who, Map<String, Object> post) {
+    Map<String, Object> body = new LinkedHashMap<>(post);
+    Object uuid = body.get("uuid");
+    if (!(uuid instanceof String) || ((String) uuid).isEmpty()) body.put("uuid", UUID.randomUUID().toString());
+    CallSpec spec = new CallSpec("createCommunityPost", "POST", "/community/posts", "user", "tenant").body(body);
+    spec.idempotent = true;
+    return call(spec, who);
+  }
+
+  /** Headers the JDK's HTTP client sets itself (setting them throws). */
+  private static final Set<String> RESTRICTED_HEADERS = Set.of("content-length", "host", "connection", "expect", "upgrade");
+
+  /**
+   * PUTs an upload to the slot the platform gave (object storage, not the open API: no token, its own
+   * headers). Not limited by the client's timeout: a large video takes as long as it takes.
+   */
+  private void putUpload(String uploadUrl, Object headers, HttpRequest.BodyPublisher body) {
+    HttpRequest.Builder rb = HttpRequest.newBuilder(URI.create(uploadUrl)).PUT(body);
+    if (headers instanceof Map) {
+      for (Map.Entry<?, ?> h : ((Map<?, ?>) headers).entrySet()) {
+        String name = String.valueOf(h.getKey());
+        if (h.getValue() instanceof String && !RESTRICTED_HEADERS.contains(name.toLowerCase(java.util.Locale.ROOT))) {
+          rb.setHeader(name, (String) h.getValue());
+        }
+      }
+    }
+    HttpResponse<byte[]> res;
+    try {
+      res = http.send(rb.build(), HttpResponse.BodyHandlers.ofByteArray());
+    } catch (IOException e) {
+      boolean timedOut = e instanceof HttpTimeoutException;
+      throw new OpenApiException(0, timedOut ? "TIMEOUT" : "NETWORK", "PUT upload: " + e, null, null, null, e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new OpenApiException(0, "NETWORK", "PUT upload: interrupted", null, null, null, e);
+    }
+    int status = res.statusCode();
+    if (status < 200 || status >= 300) {
+      String text = new String(res.body() == null ? new byte[0] : res.body(), StandardCharsets.UTF_8);
+      throw new OpenApiException(
+          status,
+          "UPLOAD_FAILED",
+          "PUT upload: HTTP " + status,
+          null,
+          mapOf("reason", "upload_failed", "body", text.length() > 500 ? text.substring(0, 500) : text),
+          null,
+          null);
+    }
+  }
+
+  private static Map<String, Object> mapOf(Object... kv) {
+    Map<String, Object> m = new LinkedHashMap<>();
+    for (int i = 0; i < kv.length; i += 2) m.put((String) kv[i], kv[i + 1]);
+    return m;
+  }
+
   // ── calls ─────────────────────────────────────────────────────────────────
 
   /**
@@ -514,7 +830,9 @@ public class OpenClient extends Operations {
         rb.method(method, HttpRequest.BodyPublishers.noBody());
       }
       boolean canRetry = attempt < maxRetries;
-      boolean idempotent = IDEMPOTENT.contains(method) || ("POST".equals(method) && retryPost && auth == null);
+      boolean idempotent = IDEMPOTENT.contains(method)
+          || ("POST".equals(method) && retryPost && auth == null)
+          || (auth != null && ((CallSpec) auth[0]).idempotent);
       HttpResponse<byte[]> res;
       try {
         res = http.send(rb.build(), HttpResponse.BodyHandlers.ofByteArray());
