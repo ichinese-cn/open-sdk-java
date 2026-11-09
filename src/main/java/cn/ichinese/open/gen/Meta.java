@@ -11,7 +11,7 @@ public final class Meta {
   private Meta() {}
 
   /** The SDK's version (it follows the open API's). */
-  public static final String VERSION = "1.0.0-rc.4";
+  public static final String VERSION = "1.0.0-rc.5";
 
   /** The open API's address from the release configuration (sdks/release.json); the client's <code>baseUrl</code> overrides it. */
   public static final String DEFAULT_BASE_URL = "https://open.ichinese.cn";
@@ -23,6 +23,8 @@ public final class Meta {
   public static final List<String> SCOPES = List.of(
       "openid",
       "profile",
+      "phone",
+      "email",
       "org:member:readonly",
       "org:member",
       "class:readonly",
@@ -219,6 +221,10 @@ public final class Meta {
   public static final String SCOPE_OPENID = "openid";
   /** The scope <code>profile</code>. */
   public static final String SCOPE_PROFILE = "profile";
+  /** The scope <code>phone</code>. */
+  public static final String SCOPE_PHONE = "phone";
+  /** The scope <code>email</code>. */
+  public static final String SCOPE_EMAIL = "email";
   /** The scope <code>org:member:readonly</code>. */
   public static final String SCOPE_ORG_MEMBER_READONLY = "org:member:readonly";
   /** The scope <code>org:member</code>. */
