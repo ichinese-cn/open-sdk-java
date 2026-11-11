@@ -11,7 +11,7 @@ public final class Meta {
   private Meta() {}
 
   /** The SDK's version (it follows the open API's). */
-  public static final String VERSION = "1.0.0-rc.5";
+  public static final String VERSION = "1.0.0-rc.6";
 
   /** The open API's address from the release configuration (sdks/release.json); the client's <code>baseUrl</code> overrides it. */
   public static final String DEFAULT_BASE_URL = "https://open.ichinese.cn";
@@ -100,6 +100,9 @@ public final class Meta {
       "not_installed",
       "not_available",
       "scope_denied",
+      "gray_api_denied",
+      "frame_assignment_overlap",
+      "idempotency_conflict",
       "scope_pending",
       "scope_not_declared",
       "gold_only",
@@ -214,6 +217,9 @@ public final class Meta {
     m.put("addMyWord", List.of("user"));
     m.put("listClassExams", List.of("tenant"));
     m.put("listClassExamResults", List.of("tenant"));
+    m.put("listGrayAvatarFrames", List.of("app"));
+    m.put("assignGrayAvatarFrame", List.of("app"));
+    m.put("getGrayCommunityPostCounts", List.of("app"));
     OPERATION_TOKENS = Collections.unmodifiableMap(m);
   }
 

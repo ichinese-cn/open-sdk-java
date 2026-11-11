@@ -2349,4 +2349,89 @@ public abstract class Operations {
   public Iterable<Map<String, Object>> listClassExamResultsAll(String classId, String examId, Map<String, Object> query) {
     return listClassExamResultsAll(classId, examId, query, null);
   }
+
+  /**
+   * List assignable avatar frames (<code>GET /gray/avatar-frames</code>; app token).
+   *
+   * @param query the query parameters (<code>page_size</code>, <code>page_token</code>), or null
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> listGrayAvatarFrames(Map<String, Object> query, RequestOptions options) {
+    return call(new CallSpec("listGrayAvatarFrames", "GET", "/gray/avatar-frames", "app").query(query), options);
+  }
+
+  /**
+   * List assignable avatar frames (<code>GET /gray/avatar-frames</code>; app token), with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters (<code>page_size</code>, <code>page_token</code>), or null
+   * @return the JSON answer
+   */
+  public Map<String, Object> listGrayAvatarFrames(Map<String, Object> query) {
+    return listGrayAvatarFrames(query, null);
+  }
+
+  /**
+   * Every item of {@link #listGrayAvatarFrames}, page after page (the next page is fetched while iterating).
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @param options which token to call with
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listGrayAvatarFramesAll(Map<String, Object> query, RequestOptions options) {
+    return iterate(new CallSpec("listGrayAvatarFrames", "GET", "/gray/avatar-frames", "app").query(query), options);
+  }
+
+  /**
+   * Every item of {@link #listGrayAvatarFrames}, page after page, with no options: the app token when the operation takes one.
+   *
+   * @param query the query parameters without <code>page_token</code> (<code>page_size</code> defaults to 100), or null
+   * @return the items
+   */
+  public Iterable<Map<String, Object>> listGrayAvatarFramesAll(Map<String, Object> query) {
+    return listGrayAvatarFramesAll(query, null);
+  }
+
+  /**
+   * Temporarily set an avatar frame for any platform user (<code>POST /gray/avatar-frame-assignments</code>; app token).
+   *
+   * @param body the JSON request body (a Map, List or value)
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> assignGrayAvatarFrame(Object body, RequestOptions options) {
+    return call(new CallSpec("assignGrayAvatarFrame", "POST", "/gray/avatar-frame-assignments", "app").body(body), options);
+  }
+
+  /**
+   * Temporarily set an avatar frame for any platform user (<code>POST /gray/avatar-frame-assignments</code>; app token), with no options: the app token when the operation takes one.
+   *
+   * @param body the JSON request body (a Map, List or value)
+   * @return the JSON answer
+   */
+  public Map<String, Object> assignGrayAvatarFrame(Object body) {
+    return assignGrayAvatarFrame(body, null);
+  }
+
+  /**
+   * Count posts across all regions (<code>GET /gray/community/post-counts</code>; app token).
+   *
+   * @param options which token to call with (null: the app token, when the operation takes one)
+   * @return the JSON answer
+   * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
+   */
+  public Map<String, Object> getGrayCommunityPostCounts(RequestOptions options) {
+    return call(new CallSpec("getGrayCommunityPostCounts", "GET", "/gray/community/post-counts", "app"), options);
+  }
+
+  /**
+   * Count posts across all regions (<code>GET /gray/community/post-counts</code>; app token), with no options: the app token when the operation takes one.
+   *
+   * @return the JSON answer
+   */
+  public Map<String, Object> getGrayCommunityPostCounts() {
+    return getGrayCommunityPostCounts(null);
+  }
 }
