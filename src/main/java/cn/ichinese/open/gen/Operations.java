@@ -2416,22 +2416,24 @@ public abstract class Operations {
   }
 
   /**
-   * Count posts across all regions (<code>GET /gray/community/post-counts</code>; app token).
+   * Count posts by topic across all five regions (<code>GET /gray/community/post-counts</code>; app token).
    *
+   * @param query the query parameters (<code>topic</code>), or null
    * @param options which token to call with (null: the app token, when the operation takes one)
    * @return the JSON answer
    * @throws cn.ichinese.open.OpenApiException on an error answer or a failure
    */
-  public Map<String, Object> getGrayCommunityPostCounts(RequestOptions options) {
-    return call(new CallSpec("getGrayCommunityPostCounts", "GET", "/gray/community/post-counts", "app"), options);
+  public Map<String, Object> getGrayCommunityPostCounts(Map<String, Object> query, RequestOptions options) {
+    return call(new CallSpec("getGrayCommunityPostCounts", "GET", "/gray/community/post-counts", "app").query(query), options);
   }
 
   /**
-   * Count posts across all regions (<code>GET /gray/community/post-counts</code>; app token), with no options: the app token when the operation takes one.
+   * Count posts by topic across all five regions (<code>GET /gray/community/post-counts</code>; app token), with no options: the app token when the operation takes one.
    *
+   * @param query the query parameters (<code>topic</code>), or null
    * @return the JSON answer
    */
-  public Map<String, Object> getGrayCommunityPostCounts() {
-    return getGrayCommunityPostCounts(null);
+  public Map<String, Object> getGrayCommunityPostCounts(Map<String, Object> query) {
+    return getGrayCommunityPostCounts(query, null);
   }
 }
